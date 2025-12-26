@@ -1,7 +1,8 @@
+// src/pages/LoginPage.tsx
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import userApi from '@/api/userClient'
-import { fetchEventPublic, type EventPublic } from '@/api/publicClient'
+import { fetchEventCard, type EventCard } from '@/api/publicClient'
 
 const reasonMap: Record<string, string> = {
   event_token_missing: 'Потрібно підтвердити доступ до цієї події.',
@@ -21,8 +22,9 @@ const reasonMap: Record<string, string> = {
 
 function getSlugFromRedirect(redirect: string | null): string | null {
   if (!redirect) return null
-  // очікуємо щось на кшталт /events/<slug>[/...]
-  const m = redirect.match(/^\/events\/([^\/\?\#]+)\b/i)
+  // підтримуємо як /events/<slug>, так і /p/<slug>
+  const path = redirect.split('?')[0]
+  const m = path.match(/^\/(?:events|p)\/([^\/\?\#]+)\b/i)
   return m?.[1] ?? null
 }
 
@@ -34,7 +36,7 @@ export default function LoginPage() {
   const reasonKey = params.get('reason') || ''
   const slug = useMemo(() => getSlugFromRedirect(redirect), [redirect])
 
-  const [eventInfo, setEventInfo] = useState<EventPublic | null>(null)
+  const [eventInfo, setEventInfo] = useState<EventCard | null>(null)
   const [code, setCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [serverMsg, setServerMsg] = useState<string | null>(null)
@@ -45,7 +47,7 @@ export default function LoginPage() {
     if (!slug) { setEventInfo(null); return }
     ;(async () => {
       try {
-        const data = await fetchEventPublic(slug)
+        const data = await fetchEventCard(slug)
         if (!dead) setEventInfo(data)
       } catch {
         if (!dead) setEventInfo(null)
@@ -65,9 +67,8 @@ export default function LoginPage() {
     setSubmitting(true)
     setServerMsg(null)
     try {
-      // ваш бек: /login (або /api/login) — залишаю як /login, бо з логів у тебе так
+      // ваш бек: /login (збережено як було)
       const res = await userApi.post('/login', { code }, { withCredentials: true })
-      // успіх → редірект туди, звідки прийшли
       if (res.status >= 200 && res.status < 300) {
         navigate(redirect)
       } else {
@@ -75,7 +76,6 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       const detail = err?.response?.data?.detail
-      // підлаштуємося під можливі відповіді бекенда
       if (detail === 'Code disabled or expired') {
         setServerMsg('Код вимкнено або строк його дії вичерпано.')
       } else if (detail === 'Invalid or inactive code') {
@@ -98,17 +98,17 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold">
             {eventInfo ? `Доступ до: «${eventInfo.title}»` : 'Вхід до події'}
           </h1>
-          {slug && <div className="text-sm opacity-70 mt-1">/events/{slug}</div>}
+          {slug && <div className="text-sm opacity-70 mt-1">/p/{slug}</div>}
         </div>
 
-        {/* Інфо-банер (тільки якщо є reason) */}
+        {/* Інфо-банер */}
         {bannerText && (
           <div className="rounded-lg border p-3 bg-amber-50 border-amber-200 text-amber-900">
             {bannerText}
           </div>
         )}
 
-        {/* Повідомлення сервера (помилки логіну) */}
+        {/* Помилка логіну */}
         {serverMsg && (
           <div className="rounded-lg border p-3 bg-red-50 border-red-200 text-red-800">
             {serverMsg}
@@ -140,7 +140,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Підказка */}
         <p className="text-xs opacity-60 text-center">
           Після успішного входу ви автоматично перейдете до сторінки події.
         </p>

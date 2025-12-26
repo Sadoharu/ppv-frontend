@@ -1,7 +1,8 @@
+// src/pages/UserLogin.tsx
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import userApi from '@/api/userClient' // viewer-клієнт з withCredentials: true
-import { fetchEventPublic, type EventPublic } from '@/api/publicClient'
+import { useLocation } from 'react-router-dom'
+import userApi from '@/api/userClient' // withCredentials: true
+import { fetchEventCard, type EventCard } from '@/api/publicClient'
 
 const reasonMap: Record<string, string> = {
   event_token_missing: 'Потрібно підтвердити доступ до цієї події.',
@@ -24,10 +25,23 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(search), [search])
 }
 
+// /events/:slug або /p/:slug → slug
 function getSlugFromRedirect(redirect: string | null): string | null {
   if (!redirect) return null
-  const m = redirect.match(/^\/events\/([^\/\?\#]+)\b/i)
+  const path = redirect.split('?')[0]
+  const m = path.match(/^\/(?:events|p)\/([^\/\?\#]+)\b/i)
   return m?.[1] ?? null
+}
+
+function resolveTargetUrl(slug: string | null, ev: EventCard | null, redirect: string) {
+  // якщо бек повертає точний page_url — використовуємо його
+  const pageUrl = (ev as any)?.page_url as string | undefined
+  if (pageUrl) return pageUrl
+  if (slug) return `/p/${encodeURIComponent(slug)}`
+  // якщо redirect вже веде на /p/* — можна піти туди
+  if (/^\/p\//i.test(redirect)) return redirect
+  // fallback — на каталог
+  return '/'
 }
 
 export default function UserLogin() {
@@ -35,23 +49,20 @@ export default function UserLogin() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  const navigate = useNavigate()
-  const location = useLocation()
   const q = useQuery()
-
   const redirect = q.get('redirect') || '/'
   const reasonKey = q.get('reason') || ''
   const slug = useMemo(() => getSlugFromRedirect(redirect), [redirect])
 
-  const [eventInfo, setEventInfo] = useState<EventPublic | null>(null)
+  const [eventInfo, setEventInfo] = useState<EventCard | null>(null)
 
-  // Підтягнути публічні дані події (щоб показати назву)
+  // Підтягнути картку події (для відображення назви + отримати id/page_url)
   useEffect(() => {
     let dead = false
     if (!slug) { setEventInfo(null); return }
     ;(async () => {
       try {
-        const data = await fetchEventPublic(slug)
+        const data = await fetchEventCard(slug) // GET /api/events/:slug
         if (!dead) setEventInfo(data)
       } catch {
         if (!dead) setEventInfo(null)
@@ -72,16 +83,16 @@ export default function UserLogin() {
     setErr(null)
     setLoading(true)
     try {
-      // Якщо знаємо event_id — одразу просимо бек перевірити доступ цього коду до події
       const payload: any = { code: val }
       if (eventInfo?.id) payload.event_id = eventInfo.id
 
       await userApi.post('/api/auth/login_by_code', payload, { withCredentials: true })
-      // після успішного логіну повертаємось туди, звідки прийшли
-      navigate(redirect, { replace: true })
+
+      // Ключове: повний перехід на серверну сторінку (щоб підвантажився PPV runtime)
+      const target = resolveTargetUrl(slug, eventInfo, redirect)
+      window.location.assign(target)
     } catch (e: any) {
       const detail = e?.response?.data?.detail
-      // Нормалізація повідомлень
       if (detail === 'Code disabled or expired') {
         setErr('Код вимкнено або строк дії минув')
       } else if (detail === 'Invalid or inactive code') {
@@ -99,29 +110,25 @@ export default function UserLogin() {
   return (
     <div className="min-h-screen grid place-items-center bg-slate-50 p-4">
       <form onSubmit={submit} className="bg-white p-6 rounded-xl shadow w-full max-w-md space-y-4">
-        {/* Заголовок з назвою події (якщо є) */}
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold">
             {eventInfo ? `Доступ до: «${eventInfo.title}»` : 'Вхід за кодом'}
           </h1>
-          {slug && <div className="text-xs opacity-60">/events/{slug}</div>}
+          {slug && <div className="text-xs opacity-60">/p/{slug}</div>}
         </div>
 
-        {/* Інформаційний банер із причиною */}
         {bannerText && (
           <div className="rounded-lg border p-3 bg-amber-50 border-amber-200 text-amber-900 text-sm">
             {bannerText}
           </div>
         )}
 
-        {/* Помилка від сервера під час сабміту */}
         {err && (
           <div className="rounded-lg border p-3 bg-red-50 border-red-200 text-red-800 text-sm">
             {err}
           </div>
         )}
 
-        {/* Поле для коду */}
         <label className="block">
           <span className="text-sm">Код доступу</span>
           <input
@@ -140,9 +147,8 @@ export default function UserLogin() {
           {loading ? 'Вхід…' : 'Підтвердити доступ'}
         </button>
 
-        {/* Підказка */}
         <p className="text-xs opacity-60 text-center">
-          Після успішного входу ви автоматично перейдете до сторінки події.
+          Після успішного входу ви перейдете на сторінку події.
         </p>
       </form>
     </div>

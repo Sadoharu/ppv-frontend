@@ -1,3 +1,4 @@
+// src/components/events/EventForm.tsx
 import { useEffect, useMemo, useState } from 'react'
 import type { AdminEvent } from '@/api/adminEvents'
 import { isoToLocalInput, localInputToIso } from '@/utils/datetime'
@@ -12,11 +13,14 @@ type Props = {
 }
 
 const EMPTY: Partial<AdminEvent> = {
-  title: '', slug: '', status: 'draft',
-  starts_at: '', ends_at: '',
-  thumbnail_url: '', short_description: '',
+  title: '',
+  slug: '',
+  status: 'draft',
+  starts_at: '',
+  ends_at: '',
+  thumbnail_url: '',
+  short_description: '',
   player_manifest_url: '',
-  custom_mode: 'none', custom_html: '', custom_css: '', custom_js: '',
 }
 
 export default function EventForm({
@@ -24,7 +28,6 @@ export default function EventForm({
 }: Props) {
   const [data, setData] = useState<Partial<AdminEvent>>({ ...EMPTY, ...initial })
 
-  // локальні поля для datetime-local
   const [startsLocal, setStartsLocal] = useState('')
   const [endsLocal, setEndsLocal] = useState('')
 
@@ -96,7 +99,10 @@ export default function EventForm({
           onChange={e => setData({ ...data, status: e.target.value as any })}
         >
           <option value="draft">draft</option>
+          <option value="scheduled">scheduled</option>
           <option value="published">published</option>
+          <option value="live">live</option>
+          <option value="ended">ended</option>
           <option value="archived">archived</option>
         </select>
       </label>
@@ -146,46 +152,6 @@ export default function EventForm({
           className="border rounded px-3 py-2 w-full min-h-[100px]"
           value={data.short_description || ''}
           onChange={e => setData({ ...data, short_description: e.target.value })}
-        />
-      </label>
-
-      <label className="block">
-        <div className="text-sm font-medium">Custom mode</div>
-        <select
-          className="border rounded px-3 py-2 w-full"
-          value={data.custom_mode || 'none'}
-          onChange={e => setData({ ...data, custom_mode: e.target.value as any })}
-        >
-          <option value="none">none</option>
-          <option value="safe">safe</option>
-          <option value="sandbox">sandbox</option>
-        </select>
-      </label>
-
-      <label className="block md:col-span-2">
-        <div className="text-sm font-medium">Custom HTML (sandbox)</div>
-        <textarea
-          className="border rounded px-3 py-2 w-full min-h-[120px]"
-          value={data.custom_html || ''}
-          onChange={e => setData({ ...data, custom_html: e.target.value })}
-        />
-      </label>
-
-      <label className="block md:col-span-2">
-        <div className="text-sm font-medium">Custom CSS (sandbox)</div>
-        <textarea
-          className="border rounded px-3 py-2 w-full min-h-[120px]"
-          value={data.custom_css || ''}
-          onChange={e => setData({ ...data, custom_css: e.target.value })}
-        />
-      </label>
-
-      <label className="block md:col-span-2">
-        <div className="text-sm font-medium">Custom JS (sandbox)</div>
-        <textarea
-          className="border rounded px-3 py-2 w-full min-h-[120px]"
-          value={data.custom_js || ''}
-          onChange={e => setData({ ...data, custom_js: e.target.value })}
         />
       </label>
 

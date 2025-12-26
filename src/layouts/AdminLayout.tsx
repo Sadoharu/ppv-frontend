@@ -1,5 +1,5 @@
 // src/layouts/AdminLayout.tsx
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState, PropsWithChildren } from 'react'
 import { useAuth } from '@/state/auth'
 import adminApi from '@/api/adminClient'
@@ -19,7 +19,7 @@ function NavItem({ to, label, icon, collapsed }: ItemProps) {
     <NavLink
       to={to}
       title={label}
-      className={({ isActive }) => (isActive ? `${base} ${active}` : base)}
+      className={({ isActive }) => (isActive ? `${base} ${active}` : `${base}`)}
       end={to === '/admin'}
     >
       <span className="shrink-0">{icon}</span>
@@ -36,19 +36,19 @@ export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem('admin_sidebar_collapsed') === '1' } catch { return false }
   })
-  const [authReady, setAuthReady] = useState(false) // ⬅️ НОВЕ
+  const [authReady, setAuthReady] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, role, logout } = useAuth() as any
 
   useEffect(() => {
     try { localStorage.setItem('admin_sidebar_collapsed', collapsed ? '1' : '0') } catch {}
   }, [collapsed])
-    // ⬇️ НОВЕ: boot авторизації ДО першого рендера контенту
+
+  // boot авторизації ДО першого рендера контенту
   useEffect(() => {
     let dead = false
-    // 1) підхопити токен з localStorage (миттєво)
     initAdminAuthFromStorage()
-    // 2) тихий refresh або підтвердження доступності сесії
     ;(async () => {
       const ok = await bootstrapAdminAuth()
       if (dead) return
@@ -62,12 +62,9 @@ export default function AdminLayout() {
   }, [navigate])
 
   async function handleLogout() {
-    // якщо є бекенд-логінка для адміна — можемо спробувати виклик
     try {
-      // якщо ендпойнта немає — помилка ігнорується
       await adminApi.post('/api/admin/logout', {}, { validateStatus: () => true })
     } catch {}
-    // локальний логаут зі стейту
     if (typeof logout === 'function') logout()
     navigate('/admin/login', { replace: true })
   }
@@ -82,6 +79,8 @@ export default function AdminLayout() {
       </div>
     )
   }
+
+  const mainMargin = collapsed ? 'ml-16' : 'ml-56'
 
   return (
     <div className="min-h-screen flex">
@@ -170,18 +169,30 @@ export default function AdminLayout() {
               </Icon>
             }
           />
-        
-        <NavLink to="/admin/events" className={({ isActive }) => (isActive ? 'block px-3 py-2 rounded bg-slate-900 text-white' : 'block px-3 py-2 rounded hover:bg-slate-100')}>
-          Події
-        </NavLink>
-      </nav>
-
+          {/* Події як нормальний NavItem */}
+          <NavItem
+            to="/admin/events"
+            label="Події"
+            collapsed={collapsed}
+            icon={
+              <Icon>
+                {/* calendar */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </Icon>
+            }
+          />
+        </nav>
 
         {/* Прокладка щоб профіль завжди був внизу */}
         <div className="flex-1" />
 
         {/* Блок профілю / logout */}
-        <div className={`mt-3 border-t pt-3 ${collapsed ? 'text-center' : ''}`}>
+        <div className={`mt-3 border-т pt-3 ${collapsed ? 'text-center' : ''}`}>
           {!collapsed && (
             <>
               <div className="text-sm font-medium truncate">{displayEmail}</div>
@@ -208,7 +219,7 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 bg-slate-50 ml-16 sm:ml-56 transition-[margin] duration-200">
+      <main className={`flex-1 bg-slate-50 ${mainMargin} transition-[margin] duration-200`}>
         <Outlet />
       </main>
     </div>

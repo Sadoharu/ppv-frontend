@@ -1,8 +1,8 @@
-// src/ws.ts
+// src/api/ws.ts
 export type WSMessage = { type: string; payload?: any }
 
 import axios from 'axios'
-import { setAdminAccess } from '@/api/adminClient' // щоб оновити access у памʼяті/LS
+import { setAdminAccess } from '@/api/adminClient' // оновлення access у памʼяті/LS
 
 // ───────── helpers ─────────
 
@@ -15,16 +15,11 @@ function wsOrigin() {
   return http.replace(/^http(s?):/i, (_, s) => (s ? 'wss:' : 'ws:'))
 }
 
-function getAdminAccessToken(): string {
-  let t = ''
-  try { t = localStorage.getItem('admin_access') || '' } catch {}
-  return t
-}
-
 function expMs(jwt: string | null): number | null {
   if (!jwt) return null
   try {
-    const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const b64 = jwt.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/')
+    if (!b64) return null
     const json = JSON.parse(atob(b64))
     return typeof json.exp === 'number' ? json.exp * 1000 : null
   } catch { return null }
@@ -55,10 +50,10 @@ async function ensureFreshAccess(): Promise<string | null> {
 // ───────── admin WS з авто-рефрешем і реконектом ─────────
 
 /** Адмінський WS:
+ *  - підʼєднується до `${WS_BASE}/api/ws/admin?token=...`
  *  - перед конектом тихо оновлює access за потреби
- *  - додає ?token=... у query
  *  - авто-реконект із backoff
- *  - якщо сервер закрив з 4401/4403 — пробує refresh і негайний реконект
+ *  - при 4401/4403 пробує refresh і негайний реконект
  *
  * Повертає обʼєкт, сумісний з WebSocket (можна призначати onmessage/onopen/...).
  */
@@ -84,7 +79,6 @@ export function adminWS(): WebSocket {
     ws.onclose = async (ev) => {
       _onclose?.(ev)
       if (closed) return
-      // 4401/4403: токен не підійшов → спробуємо refresh один раз негайно
       if (ev.code === 4401 || ev.code === 4403) {
         const t = await ensureFreshAccess()
         if (t) { connect(); return }
@@ -101,10 +95,7 @@ export function adminWS(): WebSocket {
 
   const connect = async () => {
     const token = await ensureFreshAccess()
-    if (!token) {
-      // нема валідного токена — не підключаємось
-      return
-    }
+    if (!token) return
     try {
       ws = new WebSocket(`${WS_BASE}/api/ws/admin?token=${encodeURIComponent(token)}`)
       applyHandlers()
@@ -115,7 +106,7 @@ export function adminWS(): WebSocket {
 
   connect()
 
-  // Повертаємо “обгортку”, сумісну з WebSocket API (як у твоєму коді)
+  // “обгортка”, сумісна з WebSocket API
   const wrapper = {
     get readyState() { return ws ? ws.readyState : WebSocket.CLOSED },
     close: () => {
@@ -133,11 +124,11 @@ export function adminWS(): WebSocket {
   return wrapper
 }
 
-// ───────── універсальний конектор (за потреби) ─────────
+// ───────── універсальний конектор (для інших адмін WS) ─────────
 
 /** Загальний WS-конектор для інших шляхів.
  *  Якщо opts.withAdminToken = true — додає свіжий ?token=... (із тихим refresh).
- *  Має такий самий реконект/поведінку, як adminWS().
+ *  Має таку саму реконект-поведінку, як adminWS().
  */
 export function connectWS(
   path: string,
@@ -162,7 +153,6 @@ export function connectWS(
   }
 
   const connect = async () => {
-    // будуємо URL
     const url = new URL(path, WS_BASE)
     if (opts?.withAdminToken) {
       const token = await ensureFreshAccess()
@@ -185,7 +175,6 @@ export function connectWS(
       _onclose?.(ev)
       if (closed) return
       if (ev.code === 4401 || ev.code === 4403) {
-        // пробуємо оновити токен і підʼєднатись знов
         const t = await ensureFreshAccess()
         if (t) { connect(); return }
       }
@@ -206,5 +195,5 @@ export function connectWS(
     set onopen(h: ((ev: Event) => any) | null)    { _onopen = h; if (ws) ws.onopen = h as any },
     set onerror(h: ((ev: Event) => any) | null)   { _onerror = h; if (ws) ws.onerror = h as any },
     set onclose(h: ((ev: CloseEvent) => any) | null) { _onclose = h; if (ws) ws.onclose = h as any },
-  } as unknown as WebSocket
+  } as const
 }
