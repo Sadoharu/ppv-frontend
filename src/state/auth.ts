@@ -1,12 +1,15 @@
 import { create } from 'zustand'
 
-type Role = 'admin' | 'manager' | 'support' | 'analyst' | 'guest'
+export type Role = 'super' | 'admin' | 'manager' | 'support' | 'analyst' | 'guest'
+
 type AuthState = {
   isAuthenticated: boolean
   access?: string
   refresh?: string
   sessionId?: string
   role: Role
+  email?: string
+  name?: string      // Додано поле name
   setAuth: (p: Partial<AuthState>) => void
   logout: () => void
 }
@@ -20,6 +23,8 @@ export const useAuth = create<AuthState>((set) => ({
   isAuthenticated: !!saved?.access,
   access: saved?.access,
   role: (saved?.role as Role) || 'guest',
+  email: saved?.email,
+  name: saved?.name,
   setAuth: (p) => set((s) => {
     const next = { ...s, ...p }
     localStorage.setItem('auth', JSON.stringify(next))
@@ -27,6 +32,14 @@ export const useAuth = create<AuthState>((set) => ({
   }),
   logout: () => {
     localStorage.removeItem('auth')
-    set({ isAuthenticated: false, access: undefined, refresh: undefined, sessionId: undefined, role: 'guest' })
+    set({ 
+      isAuthenticated: false, 
+      access: undefined, 
+      refresh: undefined, 
+      sessionId: undefined, 
+      role: 'guest',
+      email: undefined,
+      name: undefined
+    })
   },
 }))

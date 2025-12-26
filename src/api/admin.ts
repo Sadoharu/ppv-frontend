@@ -1,5 +1,43 @@
-// src/api/admin.ts
 import adminApi from './adminClient'
+
+export interface AdminUser {
+  id: number
+  email: string
+  role: 'super' | 'admin' | 'manager' | 'support' | 'analyst'
+  name?: string | null
+}
+
+// === CURRENT ADMIN PROFILE ===
+
+export async function fetchMe() {
+  // Спробуємо v1. Якщо впаде 404 - це очікувано, якщо бекенд ще не готовий.
+  // Але фронт готовий до цього.
+  const { data } = await adminApi.get('/api/admin/me')
+  return data as AdminUser
+}
+
+// === ADMINS MANAGEMENT (RBAC) ===
+
+export async function fetchAdmins() {
+  const { data } = await adminApi.get('/api/v1/admin/admins')
+  return data as AdminUser[]
+}
+
+export async function createAdmin(body: { email: string; password?: string; role: string }) {
+  return adminApi.post('/api/v1/admin/admins', body)
+}
+
+export async function updateAdmin(id: number, body: Partial<{ email: string; password?: string; role: string }>) {
+  return adminApi.patch(`/api/v1/admin/admins/${id}`, body)
+}
+
+export async function deleteAdmin(id: number) {
+  return adminApi.delete(`/api/v1/admin/admins/${id}`)
+}
+
+// === ACCESS CODES ===
+// ! ВАЖЛИВО: Повертаємо старий префікс /api/admin/codes, бо /api/v1/admin/codes повертає 404.
+// Коли бекенд оновить роутинг, можна буде змінити на /api/v1.
 
 // список кодів
 export async function fetchCodes(params: { limit?: number; offset?: number; q?: string; active?: boolean }) {
@@ -8,14 +46,13 @@ export async function fetchCodes(params: { limit?: number; offset?: number; q?: 
 }
 
 // оновлення коду
-// бек приймає: allowed_sessions | max_concurrent_sessions, revoked, expires_at
 export async function patchCode(
   id: number,
   body: Partial<{
     allowed_sessions: number
     max_concurrent_sessions: number
     revoked: boolean
-    expires_at: string | null // ISO або null (необмежений)
+    expires_at: string | null
   }>
 ) {
   return adminApi.patch(`/api/admin/codes/${id}`, body)
@@ -38,7 +75,7 @@ export async function forceLogoutCode(id: number) {
   return data as { ok: boolean; detail?: string }
 }
 
-// експорт CSV (бек повертає blob)
+// експорт CSV
 export async function exportCodes(params: { q?: string; active?: boolean }) {
   const search = new URLSearchParams()
   if (params.q && params.q.trim()) search.set('q', params.q.trim())
@@ -50,20 +87,15 @@ export async function exportCodes(params: { q?: string; active?: boolean }) {
 export async function importCodesCSV(
   file: File,
   opts: {
-    // колонкі
     code_column?: string
     sessions_column?: string
     active_column?: string
     expires_column?: string
     event_column?: string
-
-    // дефолти (коли в рядку порожньо або коли увімкнено force_*)
     default_sessions?: number
     default_active?: boolean
-    default_expires_at?: string  // ISO "YYYY-MM-DDTHH:mm" або "YYYY-MM-DD HH:mm"
+    default_expires_at?: string
     event?: string
-
-    // поведінка
     has_header?: boolean
     force_sessions?: boolean
     force_active?: boolean
@@ -96,4 +128,3 @@ export async function importCodesCSV(
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
-
