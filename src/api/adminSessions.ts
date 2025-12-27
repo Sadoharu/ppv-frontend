@@ -1,3 +1,4 @@
+// src/api/adminSessions.ts
 import api from './adminClient'
 
 export async function listSessions(params?: { status?: string; code_id?: number; limit?: number; offset?: number }) {

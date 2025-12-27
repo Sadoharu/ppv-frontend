@@ -1,8 +1,9 @@
-// src/api/adminEvents.ts
 import adminApi from './adminClient'
 
 export type AdminEventStatus =
   | 'draft' | 'scheduled' | 'published' | 'live' | 'ended' | 'archived'
+
+export type CustomMode = 'none' | 'html' | 'sandbox' // Додаємо тип режиму
 
 export type AdminEvent = {
   id: number
@@ -14,7 +15,9 @@ export type AdminEvent = {
   thumbnail_url?: string | null
   short_description?: string | null
   player_manifest_url?: string | null
-  page_url?: string | null // опціонально: бек може повертати готову URL сторінки /p/{slug}
+  page_url?: string | null 
+  mux_env_key?: string | null
+  custom_mode?: CustomMode // Додаємо поле
 }
 
 export type EventPayload = {
@@ -26,6 +29,8 @@ export type EventPayload = {
   thumbnail_url?: string
   short_description?: string
   player_manifest_url?: string
+  mux_env_key?: string
+  custom_mode?: CustomMode // Додаємо в payload
 }
 
 function toIso(v?: string | null) {
@@ -42,6 +47,8 @@ function buildPayload(form: Partial<AdminEvent>): EventPayload {
     thumbnail_url: form.thumbnail_url || undefined,
     short_description: form.short_description || undefined,
     player_manifest_url: form.player_manifest_url || undefined,
+    mux_env_key: form.mux_env_key || undefined,
+    custom_mode: form.custom_mode || 'none', // Передаємо режим (за замовчуванням 'none')
   }
 }
 

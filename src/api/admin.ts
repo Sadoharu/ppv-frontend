@@ -1,3 +1,4 @@
+// src/api/admin.ts
 import adminApi from './adminClient'
 
 export interface AdminUser {

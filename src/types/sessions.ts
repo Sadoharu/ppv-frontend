@@ -1,3 +1,4 @@
+// src/types/sessions.ts
 //done
 export type SessionRow = {
   id: string

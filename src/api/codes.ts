@@ -1,3 +1,4 @@
+// src/api/codes.ts
 import adminApi from '@/api/adminClient'
 
 export type AccessCode = {

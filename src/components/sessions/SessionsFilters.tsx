@@ -1,3 +1,4 @@
+// src/components/sessions/SessionsFilters.tsx
 //done
 type Props = {
   q: string

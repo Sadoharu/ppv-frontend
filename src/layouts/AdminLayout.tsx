@@ -1,3 +1,4 @@
+// src/layouts/AdminLayout.tsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useState, useMemo, PropsWithChildren } from 'react'
 import { useAuth, Role } from '@/state/auth'

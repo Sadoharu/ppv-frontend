@@ -1,3 +1,4 @@
+// src/components/AdminLayout.tsx
 import { Outlet, Link, useLocation } from "react-router-dom";
 
 export default function AdminLayout() {

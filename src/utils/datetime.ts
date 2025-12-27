@@ -1,3 +1,4 @@
+// src/utils/datetime.ts
 // ISO → значення для <input type="datetime-local">
 export function isoToLocalInput(iso?: string | null) {
   if (!iso) return ''

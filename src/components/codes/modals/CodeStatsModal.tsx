@@ -1,3 +1,4 @@
+// src/components/codes/modals/CodeStatsModal.tsx
 //done
 import { useEffect, useState } from 'react'
 import type { CodeStats } from '@/api/analytics'

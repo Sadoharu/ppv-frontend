@@ -1,3 +1,4 @@
+// src/utils/customMode.ts
 export type CustomModeCanon = 'none' | 'html' | 'sandbox'
 
 // те, з чим працює UI/форма

@@ -1,3 +1,4 @@
+// src/components/DualList.tsx
 import { useMemo, useState } from 'react'
 
 export type DualListItem = { id: number; label: string }

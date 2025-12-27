@@ -1,3 +1,4 @@
+// src/pages/admin/EventCreate.tsx
 import EventForm from '@/components/events/EventForm'
 import { createEvent, type AdminEvent } from '@/api/adminEvents'
 import { useState } from 'react'

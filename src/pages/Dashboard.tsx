@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useEffect, useState } from 'react'
 import api from '@/api/adminClient'
 import { dt } from '@/utils/format-old'

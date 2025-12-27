@@ -1,3 +1,4 @@
+// src/api/adminCodes.ts
 import adminApi from './adminClient'
 
 export async function listEventsForSelect() {

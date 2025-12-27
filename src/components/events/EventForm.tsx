@@ -1,6 +1,5 @@
-// src/components/events/EventForm.tsx
 import { useEffect, useMemo, useState } from 'react'
-import type { AdminEvent } from '@/api/adminEvents'
+import type { AdminEvent, CustomMode } from '@/api/adminEvents'
 import { isoToLocalInput, localInputToIso } from '@/utils/datetime'
 import { slugify } from '@/utils/slugify'
 
@@ -21,6 +20,8 @@ const EMPTY: Partial<AdminEvent> = {
   thumbnail_url: '',
   short_description: '',
   player_manifest_url: '',
+  mux_env_key: '',
+  custom_mode: 'none', // Дефолтне значення
 }
 
 export default function EventForm({
@@ -98,14 +99,33 @@ export default function EventForm({
           value={data.status || 'draft'}
           onChange={e => setData({ ...data, status: e.target.value as any })}
         >
-          <option value="draft">draft</option>
-          <option value="scheduled">scheduled</option>
-          <option value="published">published</option>
-          <option value="live">live</option>
-          <option value="ended">ended</option>
-          <option value="archived">archived</option>
+          <option value="draft">Draft</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="published">Published</option>
+          <option value="live">Live</option>
+          <option value="ended">Ended</option>
+          <option value="archived">Archived</option>
         </select>
       </label>
+
+      {/* --- НОВЕ ПОЛЕ: Режим сторінки --- */}
+      <label className="block">
+        <div className="text-sm font-medium">Режим сторінки (Custom Mode)</div>
+        <select
+          className="border rounded px-3 py-2 w-full bg-indigo-50/50 border-indigo-200"
+          value={data.custom_mode || 'none'}
+          onChange={e => setData({ ...data, custom_mode: e.target.value as CustomMode })}
+        >
+          <option value="none">Standard Player (React)</option>
+          <option value="html">Custom HTML (Page Editor)</option>
+          <option value="sandbox">Sandbox (Legacy)</option>
+        </select>
+        <p className="text-xs text-slate-500 mt-1">
+            "Standard Player" використовує вбудований React-плеєр.<br/>
+            "Custom HTML" дозволяє повністю переписати сторінку через редактор.
+        </p>
+      </label>
+      {/* ---------------------------------- */}
 
       <label className="block">
         <div className="text-sm font-medium">Початок</div>
@@ -135,6 +155,19 @@ export default function EventForm({
           onChange={e => setData({ ...data, player_manifest_url: e.target.value })}
           placeholder="https://cdn/.../live.m3u8"
         />
+      </label>
+
+      <label className="block md:col-span-2">
+        <div className="text-sm font-medium">Mux Environment Key <span className="text-gray-400 font-normal">(Опціонально)</span></div>
+        <input
+          className="border rounded px-3 py-2 w-full font-mono text-sm bg-slate-50"
+          value={data.mux_env_key || ''}
+          onChange={e => setData({ ...data, mux_env_key: e.target.value })}
+          placeholder="Введіть ключ, якщо для цієї події потрібен окремий environment"
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          Залиште пустим, щоб використовувати глобальний ключ налаштувань.
+        </p>
       </label>
 
       <label className="block">

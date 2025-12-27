@@ -1,3 +1,4 @@
+// src/utils/format.ts
 //done
 export function fmtDate(s?: string | null) {
   if (!s) return '—'

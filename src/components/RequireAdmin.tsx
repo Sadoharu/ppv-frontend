@@ -1,3 +1,4 @@
+// src/components/RequireAdmin.tsx
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/state/auth";
 

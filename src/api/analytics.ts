@@ -1,3 +1,4 @@
+// src/api/analytics.ts
 import adminApi from '@/api/adminClient'
 
 export type CodeStats = {

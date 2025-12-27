@@ -1,3 +1,4 @@
+// src/types/codes.ts
 //done
 export type CodeRow = {
   id: number

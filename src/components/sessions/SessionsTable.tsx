@@ -1,3 +1,4 @@
+// src/components/sessions/SessionsTable.tsx
 //done
 import { fmtBytes, fmtDate, fmtDuration } from '@/utils/format'
 import type { SessionRow } from '@/types/sessions'

@@ -1,3 +1,4 @@
+// src/features/auth/components/ReasonBanner.tsx
 //done
 import { reasonMessage } from '@/features/auth/utils/reasonMessage'
 

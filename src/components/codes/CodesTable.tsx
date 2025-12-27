@@ -1,3 +1,4 @@
+// src/components/codes/CodesTable.tsx
 //done
 import type { CodeRow, EventItem } from '@/types/codes'
 import api from '@/api/adminClient'

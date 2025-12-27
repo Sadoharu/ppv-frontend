@@ -1,3 +1,4 @@
+// src/pages/admin/SessionsPage.tsx
 //done
 import { useCallback } from 'react'
 import { useSessions } from '@/hooks/useSessions'

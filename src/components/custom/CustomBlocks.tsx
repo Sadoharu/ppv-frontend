@@ -1,3 +1,4 @@
+// src/components/custom/CustomBlocks.tsx
 import { useEffect, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { fetchCustomBlocks, type CustomBlocksResp } from '@/api/customBlocks'

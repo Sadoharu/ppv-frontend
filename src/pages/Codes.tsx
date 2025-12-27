@@ -1,3 +1,4 @@
+// src/pages/Codes.tsx
 import { useEffect, useMemo, useState } from 'react'
 import api from '@/api/adminClient'
 import DataTable from '@/components/DataTable'

@@ -1,3 +1,4 @@
+// src/pages/Admins.tsx
 import { useEffect, useState } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import DataTable from '@/components/DataTable'

@@ -1,3 +1,4 @@
+// src/state/auth.ts
 import { create } from 'zustand'
 
 export type Role = 'super' | 'admin' | 'manager' | 'support' | 'analyst' | 'guest'

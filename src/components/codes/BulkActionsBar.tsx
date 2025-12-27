@@ -1,3 +1,4 @@
+// src/components/codes/BulkActionsBar.tsx
 //done
 import { patchCode, deleteCode, reissueCode, forceLogoutCode } from '@/api/admin'
 
